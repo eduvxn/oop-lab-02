@@ -72,10 +72,28 @@ public class Runner {
     }
 
     private static Object createInstance(Class type) {
+        Constructor[] constructors = type.getDeclaredConstructors();
+        if (constructors.length == 0) {
+            System.err.println("не удалось создать " + type.getSimpleName() + ", передаём null");
+            return null;
+        }
+
+        Constructor constructor = constructors[0];
+        for (int i = 1; i < constructors.length; i++) {
+            if (constructors[i].getParameterCount() < constructor.getParameterCount()) {
+                constructor = constructors[i];
+            }
+        }
+
+        Class[] types = constructor.getParameterTypes();
+        Object[] args = new Object[types.length];
+        for (int i = 0; i < types.length; i++) {
+            args[i] = valueFor(types[i]);
+        }
+
         try {
-            Constructor constructor = type.getDeclaredConstructor();
             constructor.setAccessible(true);
-            return constructor.newInstance();
+            return constructor.newInstance(args);
         } catch (ReflectiveOperationException e) {
             System.err.println("не удалось создать " + type.getSimpleName() + ", передаём null");
             return null;
